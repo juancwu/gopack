@@ -229,6 +229,10 @@ func main() {
 		os.Exit(1)
 	}
 
+    if selection == "" {
+        os.Exit(0)
+    }
+
     fmt.Printf("Selected: %s\n", selection)
     err := runGoGet(selection)
     if err != nil {
