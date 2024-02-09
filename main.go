@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/net/html"
+
+	"github.com/juancwu/gopack/command"
 )
 
 type model struct {
@@ -222,20 +225,27 @@ func runGoInstall(pkg string) error {
 }
 
 func main() {
-	m := initModel()
-	p := tea.NewProgram(m)
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
-		os.Exit(1)
-	}
+	if len(os.Args) == 1 {
+		m := initModel()
+		p := tea.NewProgram(m)
+		if _, err := p.Run(); err != nil {
+			fmt.Printf("Alas, there's been an error: %v", err)
+			os.Exit(1)
+		}
 
-	if selection == "" {
-		os.Exit(0)
-	}
+		if selection == "" {
+			os.Exit(0)
+		}
 
-	fmt.Printf("Selected: %s\n", selection)
-	err := runGoInstall(selection)
-	if err != nil {
-		panic(err)
+		fmt.Printf("Selected: %s\n", selection)
+		err := runGoInstall(selection)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		err := command.Execute()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
