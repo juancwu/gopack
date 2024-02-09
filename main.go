@@ -27,7 +27,7 @@ const (
 )
 
 var (
-    results []string
+	results   []string
 	selection string
 	step      int = 0
 )
@@ -59,10 +59,10 @@ func (m model) FirstStepUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-            pkgName := m.textInput.Value()
-            search(pkgName)
-            m.choices = results
-            step++
+			pkgName := m.textInput.Value()
+			search(pkgName)
+			m.choices = results
+			step++
 		}
 	}
 
@@ -71,9 +71,9 @@ func (m model) FirstStepUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) SecondStepUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-    if len(m.choices) == 0 {
-        return m, tea.Quit
-    }
+	if len(m.choices) == 0 {
+		return m, tea.Quit
+	}
 
 	switch msg := msg.(type) {
 
@@ -211,14 +211,14 @@ func search(term string) {
 	getResults(doc)
 }
 
-func runGoGet(pkg string) error {
-    fmt.Printf("Running: go get %s\n", pkg)
-    cmd := exec.Command("go", "get", pkg)
-    err := cmd.Run()
-    if err != nil {
-        return err
-    }
-    return nil
+func runGoInstall(pkg string) error {
+	fmt.Printf("Running: go install %s\n", pkg)
+	cmd := exec.Command("go", "install", pkg)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func main() {
@@ -229,13 +229,13 @@ func main() {
 		os.Exit(1)
 	}
 
-    if selection == "" {
-        os.Exit(0)
-    }
+	if selection == "" {
+		os.Exit(0)
+	}
 
-    fmt.Printf("Selected: %s\n", selection)
-    err := runGoGet(selection)
-    if err != nil {
-        panic(err)
-    }
+	fmt.Printf("Selected: %s\n", selection)
+	err := runGoInstall(selection)
+	if err != nil {
+		panic(err)
+	}
 }
