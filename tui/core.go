@@ -139,7 +139,7 @@ func (m model) ThirdStepUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) install() {
 	installing = true
-	util.RunGoInstall(m.selection)
+	util.RunGoGet(m.selection)
 	finished = true
 }
 
