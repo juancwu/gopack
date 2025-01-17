@@ -15,6 +15,46 @@ const (
 	PKG_SEARCH_URL = "https://pkg.go.dev/search?m=package&%s"
 )
 
+func GetPkgUrl(value string) string {
+	re := regexp.MustCompile(`\((.*?)\)`)
+	match := re.FindStringSubmatch(value)
+	if len(match) > 1 {
+		return match[1]
+	}
+	return match[0]
+}
+
+// Search searches and parses the results from pkg.go.dev and returns the first 25 results.
+func Search(term string) []string {
+	params := url.Values{}
+	params.Add("q", term)
+	searchUrl := fmt.Sprintf(PKG_SEARCH_URL, params.Encode())
+	resp, err := http.Get(searchUrl)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	doc, err := html.Parse(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	res := parseResultsHtml(doc)
+
+	return res
+}
+
+// RunGoGet is the same as RunGoInstall but it uses 'go get' instead of 'go install'.
+func RunGoGet(pkg string) error {
+	cmd := exec.Command("go", "get", pkg)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func getText(n *html.Node) string {
 	if n.Type == html.TextNode {
 		return n.Data
@@ -66,44 +106,4 @@ func parseResultsHtml(root *html.Node) []string {
 	}
 
 	return res
-}
-
-func GetPkgUrl(value string) string {
-	re := regexp.MustCompile(`\((.*?)\)`)
-	match := re.FindStringSubmatch(value)
-	if len(match) > 1 {
-		return match[1]
-	}
-	return match[0]
-}
-
-// Search searches and parses the results from pkg.go.dev and returns the first 25 results.
-func Search(term string) []string {
-	params := url.Values{}
-	params.Add("q", term)
-	searchUrl := fmt.Sprintf(PKG_SEARCH_URL, params.Encode())
-	resp, err := http.Get(searchUrl)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		panic(err)
-	}
-
-	res := parseResultsHtml(doc)
-
-	return res
-}
-
-// RunGoGet is the same as RunGoInstall but it uses 'go get' instead of 'go install'.
-func RunGoGet(pkg string) error {
-	cmd := exec.Command("go", "get", pkg)
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-	return nil
 }
