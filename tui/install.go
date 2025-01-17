@@ -155,7 +155,7 @@ func (m installModel) install() (tea.Model, tea.Cmd) {
 
 	if s, ok := item.(searchResult); ok {
 		title := s.Title()
-		cmd = installCmd(title)
+		cmd = m.installCmd(title)
 		m.searchingTerm = ""
 		m.installingTerm = title
 		m.isSearching = false
@@ -235,7 +235,7 @@ type afterInstallMsg struct {
 	Err error
 }
 
-func installCmd(term string) tea.Cmd {
+func (m installModel) installCmd(term string) tea.Cmd {
 	return func() tea.Msg {
 		pkg := util.GetPkgUrl(term)
 		err := util.RunGoGet(pkg)
