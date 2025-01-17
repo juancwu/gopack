@@ -15,7 +15,7 @@ const (
 
 func Execute() error {
 	rootCmd := &cobra.Command{
-		Use:   "gopack",
+		Use:   "gpk",
 		Short: "A simple go package installer",
 	}
 
