@@ -77,6 +77,7 @@ func GetPkgUrl(value string) string {
 	return match[0]
 }
 
+// Search searches and parses the results from pkg.go.dev and returns the first 25 results.
 func Search(term string) []string {
 	params := url.Values{}
 	params.Add("q", term)
