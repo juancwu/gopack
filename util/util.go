@@ -1,9 +1,11 @@
 package util
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -53,6 +55,73 @@ func RunGoGet(pkg string) error {
 		return err
 	}
 	return nil
+}
+
+func ParseGoMod() ([]string, error) {
+	file, err := os.Open("go.mod")
+	if err != nil {
+		return nil, fmt.Errorf("Error opening go.mod file: %v\n", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	inRequireBlock := false
+
+	var modules []string
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+
+		// check if we're entering a require block
+		if strings.HasPrefix(line, "require (") {
+			inRequireBlock = true
+			continue
+		}
+
+		// check if we're exiting a require block
+		if line == ")" {
+			inRequireBlock = false
+			continue
+		}
+
+		// handle single-line require statement
+		if strings.HasPrefix(line, "require ") {
+			module := extractModuleFromLine(true, line)
+			modules = append(modules, module)
+			continue
+		}
+
+		// process modules within require block
+		if inRequireBlock && line != "" && !strings.HasPrefix(line, "//") {
+			module := extractModuleFromLine(false, line)
+			modules = append(modules, module)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("Error reading go.mod file: %v\n", err)
+	}
+
+	return modules, nil
+}
+
+func extractModuleFromLine(singular bool, line string) string {
+	var (
+		module  string
+		version string
+	)
+	fields := strings.Fields(line)
+
+	if singular {
+		module = fields[1]
+		version = fields[2]
+	} else {
+		module = fields[0]
+		version = fields[1]
+	}
+
+	return module + "@" + version
 }
 
 func getText(n *html.Node) string {
