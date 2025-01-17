@@ -98,6 +98,9 @@ func Search(term string) []string {
 	return res
 }
 
+/*
+DEPRECATED: Do not run this function since GoPack does not manage global installations.
+*/
 func RunGoInstall(pkg string) error {
 	fmt.Printf("Running: go install %s\n", pkg)
 	cmd := exec.Command("go", "install", pkg)
