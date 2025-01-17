@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func install() *cobra.Command {
-	installCmd := &cobra.Command{
-		Use:     "install",
+func get() *cobra.Command {
+	getCmd := &cobra.Command{
+		Use:     "get",
 		Short:   "Search and install first in result",
 		Long:    "Search and install first in query result with a confirmation. There is a chance to look all results.",
 		Example: "gopack install PKG_NAME",
@@ -33,5 +33,5 @@ func install() *cobra.Command {
 		},
 	}
 
-	return installCmd
+	return getCmd
 }

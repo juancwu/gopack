@@ -21,7 +21,7 @@ func Execute() error {
 		Short: "A simple go package installer",
 	}
 
-	rootCmd.AddCommand(install())
+	rootCmd.AddCommand(get())
 
 	return rootCmd.ExecuteContext(context.Background())
 }
