@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -9,41 +12,57 @@ import (
 )
 
 type SearchModel struct {
-	spinner           spinner.Model
-	list              list.Model
-	searching         bool
-	installing        bool
-	pickFirst         bool
-	queries           []string
-	current_query_idx int
-	err               error
+	spinner             spinner.Model
+	list                list.Model
+	isSearching         bool
+	isInstalling        bool
+	selectFirst         bool
+	queries             []string
+	results             []list.Item
+	searchingTerm       string
+	installingTerm      string
+	installationHistory []installResult
+	current_query_idx   int
+	err                 error
+	isDone              bool
 }
 
-// SearchResult represents a single search result
-type SearchResult struct {
+type installResult struct {
+	title   string
+	success bool
+}
+
+func (s installResult) Title() string { return s.title }
+
+// searchResult represents a single search result
+type searchResult struct {
 	title       string
 	description string
 }
 
 // Implementation of list.DefaultItem and list.Item interfaces for SearchResult
-func (s SearchResult) Title() string       { return s.title }
-func (s SearchResult) Description() string { return s.description }
-func (s SearchResult) FilterValue() string { return s.title }
+func (s searchResult) Title() string       { return s.title }
+func (s searchResult) Description() string { return s.description }
+func (s searchResult) FilterValue() string { return s.title }
 
-func NewSearchModel(queries []string, pickFirst bool) SearchModel {
+func NewSearchModel(queries []string, selectFirst bool) SearchModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return SearchModel{
-		spinner:           s,
-		list:              list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
-		searching:         true,
-		installing:        false,
-		pickFirst:         pickFirst,
-		queries:           queries,
-		current_query_idx: 0,
-		err:               nil,
+		spinner:             s,
+		list:                list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		isSearching:         true,
+		isInstalling:        false,
+		searchingTerm:       queries[0],
+		installingTerm:      "",
+		installationHistory: []installResult{},
+		selectFirst:         selectFirst,
+		queries:             queries,
+		current_query_idx:   0,
+		err:                 nil,
+		isDone:              false,
 	}
 }
 
@@ -51,95 +70,159 @@ func (m SearchModel) Init() tea.Cmd {
 	// start first search here
 	return tea.Batch(
 		m.spinner.Tick,
-		search(m.queries[m.current_query_idx]),
+		searchCmd(m.queries[m.current_query_idx]),
 	)
 }
 
-type searchMsg struct {
-	results []list.Item
-}
-
 func (m SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if !m.searching {
-				if s, ok := m.list.SelectedItem().(SearchResult); ok {
-					cmds = append(cmds, install(s.Title()))
-					m.searching = false
-					m.installing = true
-					m.list = list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-				}
+			if !m.isSearching {
+				return m.install()
 			}
 		case "ctrl+c":
 			return m, tea.Quit
 		default:
 			m.list, cmd = m.list.Update(msg)
-			cmds = append(cmds, cmd)
+			return m, cmd
 		}
-	case searchMsg:
-		m.searching = false
-		if m.pickFirst && len(msg.results) > 0 {
-			m.installing = true
-			cmds = append(cmds, install(msg.results[0].FilterValue()))
+	case afterSearchMsg:
+		m.results = msg.results
+		if m.selectFirst && len(msg.results) > 0 {
+			return m.install()
 		} else {
-			m.list = list.New(msg.results, list.NewDefaultDelegate(), 50, 20)
-			m.list.SetFilteringEnabled(false)
-			m.list.Title = "Search Result: " + m.queries[m.current_query_idx]
-			m.list, cmd = m.list.Update(msg)
-			cmds = append(cmds, cmd)
+			return m.showSearchResults()
 		}
-	case installMsg:
-		if msg.Err != nil {
-			m.err = msg.Err
-			return m, tea.Quit
-		}
-		if m.current_query_idx < len(m.queries)-1 {
-			m.searching = true
-			m.installing = false
-			m.current_query_idx += 1
-			cmds = append(cmds, search(m.queries[m.current_query_idx]))
-		} else {
-			m.searching = false
-			m.installing = false
-			return m, tea.Quit
-		}
+	case afterInstallMsg:
+		m = m.recordHistory(msg.Err)
+		// search the next query
+		return m.search()
 	default:
 		m.spinner, cmd = m.spinner.Update(msg)
-		cmds = append(cmds, cmd)
+		return m, cmd
 	}
 
-	return m, tea.Batch(cmds...)
+	return m, nil
 }
 
 func (m SearchModel) View() string {
-	s := "Bye"
-	if m.err != nil {
-		s = "Error: " + m.err.Error()
-		s = errText.Render(s)
-	} else if m.searching {
-		s = m.spinner.View() + " Searching..."
-	} else if m.installing {
-		s = m.spinner.View() + " Installing..."
-	} else if len(m.list.Items()) > 0 {
-		s = m.list.View()
+	var builder strings.Builder
+
+	// render the installation history
+	for _, record := range m.installationHistory {
+		if record.success {
+			builder.WriteString(okText.Render(record.title) + "\n")
+		} else {
+			builder.WriteString(errText.Render(record.title) + "\n")
+		}
 	}
-	return docStyle.Render(s)
+
+	if builder.Len() > 0 {
+		builder.WriteString("\n")
+	}
+
+	if m.isDone {
+		builder.WriteString("Done!\n")
+		return wrapper.Render(builder.String())
+	}
+
+	if m.isSearching {
+		builder.WriteString(m.spinner.View() + fmt.Sprintf(" Searching '%s'\n", m.searchingTerm))
+	}
+	if m.isInstalling {
+		builder.WriteString(m.spinner.View() + fmt.Sprintf(" Installing '%s'\n", m.installingTerm))
+	}
+	if !m.isSearching && !m.isInstalling {
+		// show search result
+		builder.WriteString(m.list.View())
+	}
+
+	return wrapper.Render(builder.String())
 }
 
-// search searches the go packages and returns a tea.Msg so that the search model
+func (m SearchModel) install() (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var item list.Item
+
+	if m.selectFirst {
+		item = m.results[0]
+	} else {
+		item = m.list.SelectedItem()
+	}
+
+	if s, ok := item.(searchResult); ok {
+		title := s.Title()
+		cmd = installCmd(title)
+		m.searchingTerm = ""
+		m.installingTerm = title
+		m.isSearching = false
+		m.isInstalling = true
+		m.list = list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	}
+
+	return m, cmd
+}
+
+func (m SearchModel) search() (tea.Model, tea.Cmd) {
+	if m.current_query_idx < len(m.queries)-1 {
+		m.isSearching = true
+		m.isInstalling = false
+		m.current_query_idx += 1
+		m.searchingTerm = m.queries[m.current_query_idx]
+		return m, searchCmd(m.searchingTerm)
+	}
+	return m.end(nil)
+}
+
+func (m SearchModel) showSearchResults() (tea.Model, tea.Cmd) {
+	m.isSearching = false
+	m.isInstalling = false
+	m.list = list.New(m.results, list.NewDefaultDelegate(), 50, 20)
+	m.list.SetFilteringEnabled(false)
+	m.list.Title = "Search Result: " + m.searchingTerm
+	m.searchingTerm = ""
+	m.installingTerm = ""
+	return m, nil
+}
+
+func (m SearchModel) recordHistory(err error) SearchModel {
+	var s string
+	if err != nil {
+		s = fmt.Sprintf("Error installing '%s': %s", m.installingTerm, err.Error())
+	} else {
+		s = fmt.Sprintf("Successfully installed '%s'", m.installingTerm)
+	}
+	m.installationHistory = append(m.installationHistory, installResult{title: s, success: err == nil})
+	return m
+}
+
+func (m SearchModel) end(err error) (tea.Model, tea.Cmd) {
+	m.isSearching = false
+	m.isInstalling = false
+	m.searchingTerm = ""
+	m.installingTerm = ""
+	m.isDone = true
+	m.err = err
+	return m, tea.Quit
+}
+
+type afterSearchMsg struct {
+	results []list.Item
+}
+
+// searchCmd searches the go packages and returns a tea.Msg so that the searchCmd model
 // can update the TUI.
-func search(term string) tea.Cmd {
+func searchCmd(term string) tea.Cmd {
 	return func() tea.Msg {
 		results := util.Search(term)
-		msg := searchMsg{
+		msg := afterSearchMsg{
 			results: make([]list.Item, len(results)),
 		}
 		for i, res := range results {
-			msg.results[i] = SearchResult{
+			msg.results[i] = searchResult{
 				title:       res,
 				description: "",
 			}
@@ -148,14 +231,14 @@ func search(term string) tea.Cmd {
 	}
 }
 
-type installMsg struct {
+type afterInstallMsg struct {
 	Err error
 }
 
-func install(term string) tea.Cmd {
+func installCmd(term string) tea.Cmd {
 	return func() tea.Msg {
 		pkg := util.GetPkgUrl(term)
 		err := util.RunGoGet(pkg)
-		return installMsg{Err: err}
+		return afterInstallMsg{Err: err}
 	}
 }
