@@ -82,7 +82,6 @@ func Search(term string) []string {
 	params := url.Values{}
 	params.Add("q", term)
 	searchUrl := fmt.Sprintf(PKG_SEARCH_URL, params.Encode())
-	fmt.Printf("URL: %s\n", searchUrl)
 	resp, err := http.Get(searchUrl)
 	if err != nil {
 		panic(err)
