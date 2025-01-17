@@ -1,12 +1,13 @@
 package command
 
 import (
-	"github.com/charmbracelet/log"
-	"github.com/juancwu/gopack/util"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/juancwu/gopack/tui"
 	"github.com/spf13/cobra"
 )
 
 func get() *cobra.Command {
+	var selectResult bool
 	getCmd := &cobra.Command{
 		Use:     "get",
 		Short:   "Search and install first in result",
@@ -15,23 +16,14 @@ func get() *cobra.Command {
 		Aliases: []string{"i"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			for _, pkgName := range args {
-				log.Warnf("Installing first match of '%s' ignoring namespace.", pkgName)
-				matches := util.Search(pkgName)
-				if len(matches) < 1 {
-					log.Errorf("Failed to search package: %s", pkgName)
-					continue
-				}
-				log.Infof("Found '%s', installing...", matches[0])
-				url := util.GetPkgUrl(matches[0])
-				if err := util.RunGoGet(url); err != nil {
-					log.Errorf("Failed to run 'go get': %v", err)
-					return err
-				}
-			}
-			return nil
+			m := tui.NewSearchModel(args, selectResult)
+			p := tea.NewProgram(m)
+			_, err := p.Run()
+			return err
 		},
 	}
+
+	getCmd.Flags().BoolVarP(&selectResult, "select", "s", false, "Show list of results and allow manual selection")
 
 	return getCmd
 }
