@@ -11,7 +11,7 @@ import (
 	"github.com/juancwu/gopack/util"
 )
 
-type SearchModel struct {
+type installModel struct {
 	spinner             spinner.Model
 	list                list.Model
 	isSearching         bool
@@ -45,12 +45,12 @@ func (s searchResult) Title() string       { return s.title }
 func (s searchResult) Description() string { return s.description }
 func (s searchResult) FilterValue() string { return s.title }
 
-func NewSearchModel(queries []string, selectFirst bool) SearchModel {
+func NewInstallModel(queries []string, selectFirst bool) installModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	return SearchModel{
+	return installModel{
 		spinner:             s,
 		list:                list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 		isSearching:         true,
@@ -66,7 +66,7 @@ func NewSearchModel(queries []string, selectFirst bool) SearchModel {
 	}
 }
 
-func (m SearchModel) Init() tea.Cmd {
+func (m installModel) Init() tea.Cmd {
 	// start first search here
 	return tea.Batch(
 		m.spinner.Tick,
@@ -74,7 +74,7 @@ func (m SearchModel) Init() tea.Cmd {
 	)
 }
 
-func (m SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m installModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -108,7 +108,7 @@ func (m SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m SearchModel) View() string {
+func (m installModel) View() string {
 	var builder strings.Builder
 
 	// render the installation history
@@ -143,7 +143,7 @@ func (m SearchModel) View() string {
 	return wrapper.Render(builder.String())
 }
 
-func (m SearchModel) install() (tea.Model, tea.Cmd) {
+func (m installModel) install() (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var item list.Item
 
@@ -166,7 +166,7 @@ func (m SearchModel) install() (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m SearchModel) search() (tea.Model, tea.Cmd) {
+func (m installModel) search() (tea.Model, tea.Cmd) {
 	if m.current_query_idx < len(m.queries)-1 {
 		m.isSearching = true
 		m.isInstalling = false
@@ -177,7 +177,7 @@ func (m SearchModel) search() (tea.Model, tea.Cmd) {
 	return m.end(nil)
 }
 
-func (m SearchModel) showSearchResults() (tea.Model, tea.Cmd) {
+func (m installModel) showSearchResults() (tea.Model, tea.Cmd) {
 	m.isSearching = false
 	m.isInstalling = false
 	m.list = list.New(m.results, list.NewDefaultDelegate(), 50, 20)
@@ -188,7 +188,7 @@ func (m SearchModel) showSearchResults() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m SearchModel) recordHistory(err error) SearchModel {
+func (m installModel) recordHistory(err error) installModel {
 	var s string
 	if err != nil {
 		s = fmt.Sprintf("Error installing '%s': %s", m.installingTerm, err.Error())
@@ -199,7 +199,7 @@ func (m SearchModel) recordHistory(err error) SearchModel {
 	return m
 }
 
-func (m SearchModel) end(err error) (tea.Model, tea.Cmd) {
+func (m installModel) end(err error) (tea.Model, tea.Cmd) {
 	m.isSearching = false
 	m.isInstalling = false
 	m.searchingTerm = ""

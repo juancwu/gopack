@@ -16,7 +16,7 @@ func get() *cobra.Command {
 		Aliases: []string{"i"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			m := tui.NewSearchModel(args, selectResult)
+			m := tui.NewInstallModel(args, selectResult)
 			p := tea.NewProgram(m)
 			_, err := p.Run()
 			return err
