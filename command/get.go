@@ -13,7 +13,6 @@ func get() *cobra.Command {
 		Short:   "Search and install first in result",
 		Long:    "Search and install first in query result with a confirmation. There is a chance to look all results.",
 		Example: "gopack install PKG_NAME",
-		Aliases: []string{"i"},
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			m := tui.NewInstallModel(args, selectResult)
