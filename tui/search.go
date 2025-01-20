@@ -76,7 +76,7 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// skip key matching when using the installModel
 	if m.state == searchingState {
 		switch msg := msg.(type) {
-		case afterInstallMsg:
+		case quitMsg:
 			// let the installModel record the installation history
 			m.im, _ = m.im.Update(msg)
 			// add the latest recorded history
@@ -96,7 +96,9 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Enter):
-			m.im = NewInstallModel([]string{m.ti.Value()}, false)
+			model := NewInstallModel([]string{m.ti.Value()}, false)
+			model.SetAsComponent(true)
+			m.im = model
 			m.state = searchingState
 			m.ti.Reset()
 			cmd = m.im.Init()
