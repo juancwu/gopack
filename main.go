@@ -15,7 +15,7 @@ func main() {
 	log.SetReportCaller(false)
 	log.SetReportTimestamp(false)
 	if len(os.Args) == 1 {
-		m := tui.NewModel()
+		m := tui.NewSearchModel()
 		p := tea.NewProgram(m)
 		if _, err := p.Run(); err != nil {
 			fmt.Printf("Alas, there's been an error: %v", err)
