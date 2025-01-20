@@ -118,7 +118,7 @@ func (m searchModel) View() string {
 
 	// render the input and history
 	var builder strings.Builder
-	builder.WriteString(m.history)
+	builder.WriteString(m.history + "\n")
 	builder.WriteString(strings.Join([]string{m.ti.View(), m.help.View(m.keys)}, "\n\n"))
 	return wrapper.Render(builder.String())
 }
