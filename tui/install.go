@@ -25,6 +25,10 @@ type installModel struct {
 	current_query_idx   int
 	err                 error
 	isDone              bool
+	// name is the model name
+	name string
+	// asComponent represnets if the model is being used as part of a component to a parent model
+	asComponent bool
 }
 
 type installResult struct {
@@ -63,6 +67,7 @@ func NewInstallModel(queries []string, selectFirst bool) installModel {
 		current_query_idx:   0,
 		err:                 nil,
 		isDone:              false,
+		name:                "Install Model",
 	}
 }
 
@@ -83,8 +88,18 @@ func (m installModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !m.isSearching {
 				return m.install()
 			}
-		case "ctrl+c":
+		case "ctrl+c": // force quit
+			if m.asComponent {
+				return m, quitCmd(m.name)
+			}
 			return m, tea.Quit
+		case "q": // normal quit
+			if !m.isSearching || !m.isInstalling {
+				if m.asComponent {
+					return m, quitCmd(m.name)
+				}
+				return m, tea.Quit
+			}
 		default:
 			m.list, cmd = m.list.Update(msg)
 			return m, cmd
@@ -139,6 +154,10 @@ func (m installModel) View() string {
 
 func (m installModel) History() string {
 	return m.renderHistory()
+}
+
+func (m *installModel) SetAsComponent(enabled bool) {
+	m.asComponent = enabled
 }
 
 func (m installModel) install() (tea.Model, tea.Cmd) {
@@ -216,6 +235,9 @@ func (m installModel) end(err error) (tea.Model, tea.Cmd) {
 	m.installingTerm = ""
 	m.isDone = true
 	m.err = err
+	if m.asComponent {
+		return m, quitCmd(m.name)
+	}
 	return m, tea.Quit
 }
 
@@ -250,5 +272,16 @@ func (m installModel) installCmd(term string) tea.Cmd {
 		pkg := util.GetPkgUrl(term)
 		err := util.RunGoGet(pkg)
 		return afterInstallMsg{Err: err}
+	}
+}
+
+type quitMsg struct {
+	// Model represents the model name that sent the msg
+	Model string
+}
+
+func quitCmd(model string) tea.Cmd {
+	return func() tea.Msg {
+		return quitMsg{Model: model}
 	}
 }
