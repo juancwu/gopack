@@ -77,6 +77,10 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.state == searchingState {
 		switch msg := msg.(type) {
 		case quitMsg:
+			if msg.Key == "ctrl+c" {
+				// just quit
+				return m, tea.Quit
+			}
 			// let the installModel record the installation history
 			m.im, _ = m.im.Update(msg)
 			// add the latest recorded history
