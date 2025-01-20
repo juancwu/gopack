@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/juancwu/gopack/util"
@@ -15,7 +14,6 @@ import (
 type installModel struct {
 	spinner             spinner.Model
 	list                list.Model
-	input               textinput.Model
 	isSearching         bool
 	isInstalling        bool
 	selectFirst         bool
@@ -52,13 +50,9 @@ func NewInstallModel(queries []string, selectFirst bool) installModel {
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	ti := textinput.New()
-	ti.Placeholder = "Search Packages"
-
 	return installModel{
 		spinner:             s,
 		list:                list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
-		input:               ti,
 		isSearching:         true,
 		isInstalling:        false,
 		searchingTerm:       queries[0],
@@ -73,11 +67,6 @@ func NewInstallModel(queries []string, selectFirst bool) installModel {
 }
 
 func (m installModel) Init() tea.Cmd {
-	// if no queries, do not start by searching
-	if m.queries == nil {
-		return nil
-	}
-
 	// start first search here
 	return tea.Batch(
 		m.spinner.Tick,
