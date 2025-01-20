@@ -40,3 +40,7 @@ Example: `gop get package something/else` will install `github.com/something/pac
 ## Removing Packages
 
 Just `go mod tidy`.
+
+## Download All Dependencies
+
+Just `go mod download`

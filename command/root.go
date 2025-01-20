@@ -20,7 +20,6 @@ func Execute() error {
 	}
 
 	rootCmd.AddCommand(get())
-	rootCmd.AddCommand(install())
 
 	return rootCmd.ExecuteContext(context.Background())
 }
