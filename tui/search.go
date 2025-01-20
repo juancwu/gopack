@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -35,11 +34,12 @@ func (k searchModelKeyMap) FullHelp() [][]key.Binding {
 }
 
 type searchModel struct {
-	ti    textinput.Model
-	state searchModelState
-	keys  searchModelKeyMap
-	help  help.Model
-	im    tea.Model // installModel, not defined as installModel type because Go doesn't accept it
+	ti      textinput.Model
+	state   searchModelState
+	keys    searchModelKeyMap
+	help    help.Model
+	history string
+	im      tea.Model // installModel, not defined as installModel type because Go doesn't accept it
 }
 
 func NewSearchModel() searchModel {
@@ -75,8 +75,19 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// skip key matching when using the installModel
 	if m.state == searchingState {
-		m.im, cmd = m.im.Update(msg)
-		return m, cmd
+		switch msg := msg.(type) {
+		case afterInstallMsg:
+			// let the installModel record the installation history
+			m.im, _ = m.im.Update(msg)
+			// add the latest recorded history
+			m.history += m.im.(installModel).History()
+			// reset the state for the next input
+			m.state = inputState
+		default:
+			m.im, cmd = m.im.Update(msg)
+			return m, cmd
+		}
+
 	}
 
 	switch msg := msg.(type) {
@@ -87,6 +98,7 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Enter):
 			m.im = NewInstallModel([]string{m.ti.Value()}, false)
 			m.state = searchingState
+			m.ti.Reset()
 			cmd = m.im.Init()
 			return m, cmd
 		}
@@ -97,12 +109,14 @@ func (m searchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m searchModel) View() string {
-	switch m.state {
-	case inputState:
-		return strings.Join([]string{m.ti.View(), m.help.View(m.keys)}, "\n\n")
-	case searchingState:
+	// let the installModel handle the rendering
+	if m.state == searchingState {
 		return m.im.View()
 	}
 
-	return fmt.Sprintf("Invalid Search Model State: %s", m.state)
+	// render the input and history
+	var builder strings.Builder
+	builder.WriteString(m.history)
+	builder.WriteString(strings.Join([]string{m.ti.View(), m.help.View(m.keys)}, "\n\n"))
+	return wrapper.Render(builder.String())
 }
