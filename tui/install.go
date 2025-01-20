@@ -39,15 +39,12 @@ type installResult struct {
 func (s installResult) Title() string { return s.title }
 
 // searchResult represents a single search result
-type searchResult struct {
-	title       string
-	description string
-}
+type searchResult string
 
 // Implementation of list.DefaultItem and list.Item interfaces for SearchResult
-func (s searchResult) Title() string       { return s.title }
-func (s searchResult) Description() string { return s.description }
-func (s searchResult) FilterValue() string { return s.title }
+func (s searchResult) Title() string       { return string(s) }
+func (s searchResult) Description() string { return "" }
+func (s searchResult) FilterValue() string { return "" }
 
 func NewInstallModel(queries []string, selectFirst bool) installModel {
 	s := spinner.New()
@@ -171,7 +168,7 @@ func (m installModel) install() (tea.Model, tea.Cmd) {
 	}
 
 	if s, ok := item.(searchResult); ok {
-		title := s.Title()
+		title := string(s)
 		cmd = m.installCmd(title)
 		m.searchingTerm = ""
 		m.installingTerm = title
@@ -197,11 +194,27 @@ func (m installModel) search() (tea.Model, tea.Cmd) {
 func (m installModel) showSearchResults() (tea.Model, tea.Cmd) {
 	m.isSearching = false
 	m.isInstalling = false
-	m.list = list.New(m.results, list.NewDefaultDelegate(), 50, 20)
+
+	delegate := list.NewDefaultDelegate()
+	delegate.ShowDescription = false
+
+	keys := list.DefaultKeyMap()
+
+	// don't want to show these in help section, they are disabled
+	keys.Filter.SetEnabled(false)
+	keys.CancelWhileFiltering.SetEnabled(false)
+	keys.ForceQuit.SetEnabled(false)
+	keys.AcceptWhileFiltering.SetEnabled(false)
+	keys.ClearFilter.SetEnabled(false)
+
+	m.list = list.New(m.results, delegate, 50, 20)
 	m.list.SetFilteringEnabled(false)
 	m.list.Title = "Search Result: " + m.searchingTerm
+	m.list.KeyMap = keys
+
 	m.searchingTerm = ""
 	m.installingTerm = ""
+
 	return m, nil
 }
 
@@ -254,10 +267,7 @@ func searchCmd(term string) tea.Cmd {
 			results: make([]list.Item, len(results)),
 		}
 		for i, res := range results {
-			msg.results[i] = searchResult{
-				title:       res,
-				description: "",
-			}
+			msg.results[i] = searchResult(res)
 		}
 		return msg
 	}
