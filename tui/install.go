@@ -87,13 +87,13 @@ func (m installModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "ctrl+c": // force quit
 			if m.asComponent {
-				return m, quitCmd(m.name)
+				return m, quitCmd(msg.String(), m.name)
 			}
 			return m, tea.Quit
 		case "q", "esc": // normal quit
 			if !m.isSearching || !m.isInstalling {
 				if m.asComponent {
-					return m, quitCmd(m.name)
+					return m, quitCmd(msg.String(), m.name)
 				}
 				return m, tea.Quit
 			}
@@ -249,7 +249,7 @@ func (m installModel) end(err error) (tea.Model, tea.Cmd) {
 	m.isDone = true
 	m.err = err
 	if m.asComponent {
-		return m, quitCmd(m.name)
+		return m, quitCmd("", m.name)
 	}
 	return m, tea.Quit
 }
@@ -288,10 +288,12 @@ func (m installModel) installCmd(term string) tea.Cmd {
 type quitMsg struct {
 	// Model represents the model name that sent the msg
 	Model string
+	// Key is the key combination input
+	Key string
 }
 
-func quitCmd(model string) tea.Cmd {
+func quitCmd(key string, model string) tea.Cmd {
 	return func() tea.Msg {
-		return quitMsg{Model: model}
+		return quitMsg{Model: model, Key: key}
 	}
 }
