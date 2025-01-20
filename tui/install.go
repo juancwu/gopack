@@ -112,13 +112,7 @@ func (m installModel) View() string {
 	var builder strings.Builder
 
 	// render the installation history
-	for _, record := range m.installationHistory {
-		if record.success {
-			builder.WriteString(okText.Render(record.title) + "\n")
-		} else {
-			builder.WriteString(errText.Render(record.title) + "\n")
-		}
-	}
+	builder.WriteString(m.renderHistory())
 
 	if builder.Len() > 0 {
 		builder.WriteString("\n")
@@ -141,6 +135,10 @@ func (m installModel) View() string {
 	}
 
 	return wrapper.Render(builder.String())
+}
+
+func (m installModel) History() string {
+	return m.renderHistory()
 }
 
 func (m installModel) install() (tea.Model, tea.Cmd) {
@@ -197,6 +195,18 @@ func (m installModel) recordHistory(err error) installModel {
 	}
 	m.installationHistory = append(m.installationHistory, installResult{title: s, success: err == nil})
 	return m
+}
+
+func (m installModel) renderHistory() string {
+	var builder strings.Builder
+	for _, record := range m.installationHistory {
+		if record.success {
+			builder.WriteString(okText.Render(record.title) + "\n")
+		} else {
+			builder.WriteString(errText.Render(record.title) + "\n")
+		}
+	}
+	return builder.String()
 }
 
 func (m installModel) end(err error) (tea.Model, tea.Cmd) {
