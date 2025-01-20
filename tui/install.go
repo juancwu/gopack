@@ -73,6 +73,11 @@ func NewInstallModel(queries []string, selectFirst bool) installModel {
 }
 
 func (m installModel) Init() tea.Cmd {
+	// if no queries, do not start by searching
+	if m.queries == nil {
+		return nil
+	}
+
 	// start first search here
 	return tea.Batch(
 		m.spinner.Tick,
