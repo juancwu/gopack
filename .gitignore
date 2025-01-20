@@ -1,3 +1,5 @@
 tmp
 .env
 build
+# Added by goreleaser init:
+dist/
