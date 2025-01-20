@@ -93,7 +93,7 @@ func (m installModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, quitCmd(m.name)
 			}
 			return m, tea.Quit
-		case "q": // normal quit
+		case "q", "esc": // normal quit
 			if !m.isSearching || !m.isInstalling {
 				if m.asComponent {
 					return m, quitCmd(m.name)
