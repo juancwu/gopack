@@ -20,6 +20,7 @@ func Execute() error {
 	}
 
 	rootCmd.AddCommand(get())
+	rootCmd.AddCommand(create())
 
 	return rootCmd.ExecuteContext(context.Background())
 }
