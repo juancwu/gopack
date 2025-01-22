@@ -6,16 +6,10 @@ import (
 	"fmt"
 	"os/exec"
 
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/juancwu/gopack/tui"
 	"github.com/spf13/cobra"
 )
-
-type Package struct {
-    Path     string `json:"Path"`
-    Version  string `json:"Version"`
-    Main     bool   `json:"Main"`
-    Dir      string `json:"Dir"`
-    Indirect bool   `json:"Indirect"`
-}
 
 func list() *cobra.Command {
     listCmd := &cobra.Command{
@@ -30,37 +24,23 @@ func list() *cobra.Command {
             }
 
             decoder := json.NewDecoder(bytes.NewReader(output))
-            var packages []Package
+            var packages []tui.Package
 
             for decoder.More() {
-                var pkg Package
+                var pkg tui.Package
                 if err := decoder.Decode(&pkg); err != nil {
                     return fmt.Errorf("error parsing JSON: %v", err)
                 }
                 packages = append(packages, pkg)
             }
+            
+            m := tui.NewListModel(packages)
+            m.List.Title = "Installed Packages"
 
-            fmt.Println("Installed packages:")
-            fmt.Println("==================")
-            
-            for _, pkg := range packages {
-                version := pkg.Version
-                if version == "" {
-                    version = "No version information"
-                }
-                
-                fmt.Printf("Package: %s\n", pkg.Path)
-                fmt.Printf("Version: %s\n", version)
-                if pkg.Dir != "" {
-                    fmt.Printf("Directory: %s\n", pkg.Dir)
-                }
-                if pkg.Indirect {
-                    fmt.Println("Type: Indirect dependency")
-                }
-                fmt.Println("------------------")
+            p := tea.NewProgram(m, tea.WithAltScreen())
+            if _, err := p.Run(); err != nil {
+                fmt.Println("Error running program:", err)
             }
-            
-            fmt.Printf("\nTotal packages: %d\n", len(packages))
             return nil
         },
     }
