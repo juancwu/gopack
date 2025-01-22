@@ -1,8 +1,6 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/juancwu/gopack/tui"
 	"github.com/spf13/cobra"
 )
@@ -15,13 +13,9 @@ func create() *cobra.Command {
         Example: "gopack create",
         RunE: func(cmd *cobra.Command, args []string) error {
             model := tui.NewCreateModel()
-            fm, err := model.Run()
+            _, err := model.Run()
             if err != nil {
                 return err
-            }
-            _, ok := fm.(*tui.CreateModel)
-            if !ok {
-                return fmt.Errorf("unexpected model type returned")
             }
             
             return nil
