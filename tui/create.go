@@ -102,12 +102,14 @@ func createProject(projectName string) error {
     }
 
     dirs := []string{
-        "cmd",
-        "internal",
-        "pkg",
-        "api",
-        "configs",
-        "test",
+        "controller",
+        "config",
+        "model",
+    }
+    files := []string{
+        "./main.go",
+        "./config/database.go",
+        "./controller/user.go",
     }
 
     for _, dir := range dirs {
@@ -119,6 +121,12 @@ func createProject(projectName string) error {
     cmd := exec.Command("go", "mod", "init", projectName)
     if err := cmd.Run(); err != nil {
         return fmt.Errorf("failed to initialize go module: %v", err)
+    }
+
+    for _, file := range files{
+        if _, err:= os.Create(file); err != nil {
+            return fmt.Errorf("failed to create file: %s: %v", file, err)
+        }
     }
 
     return nil
