@@ -1,13 +1,11 @@
 package command
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/juancwu/gopack/tui"
+	"github.com/juancwu/gopack/util"
 	"github.com/spf13/cobra"
 )
 
@@ -18,20 +16,9 @@ func list() *cobra.Command {
         Long:    "List all the packages that was installed and used. And also going to show the path they they are installed and the version.",
         Example: "gopack list",
         RunE: func(cmd *cobra.Command, args []string) error {
-            output, err := exec.Command("go", "list", "-m", "-json", "all").Output()
+            packages, err := util.GetDependencyList()
             if err != nil {
-                return fmt.Errorf("error executing command: %v", err)
-            }
-
-            decoder := json.NewDecoder(bytes.NewReader(output))
-            var packages []tui.Package
-
-            for decoder.More() {
-                var pkg tui.Package
-                if err := decoder.Decode(&pkg); err != nil {
-                    return fmt.Errorf("error parsing JSON: %v", err)
-                }
-                packages = append(packages, pkg)
+                fmt.Println("Error getting dependency list: ", err)
             }
             
             m := tui.NewListModel(packages)
