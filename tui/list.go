@@ -5,32 +5,35 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/juancwu/gopack/util"
 )
 
-type Package struct {
-    Path     string `json:"Path"`
-    Version  string `json:"Version"`
-    Dir      string `json:"Dir"`
+type packageItem struct {
+    pkg util.Package
 }
-
-func (i Package) Title() string       { return i.Path }
-func (i Package) Description() string { 
-	version := i.Version
-	if version == ""{
-		version = "Unknown"
-	}
-	return fmt.Sprintf("Version %s, Directory: %s", version, i.Dir)
-}
-func (i Package) FilterValue() string { return i.Path }
 
 type listModel struct {
 	List list.Model
 }
 
-func NewListModel(packages []Package) listModel {
+func (i packageItem) Title() string       { return i.pkg.Path }
+func (i packageItem) Description() string { 
+	version := i.pkg.Version
+	directory := i.pkg.Dir
+	if version == ""{
+		version = "Unknown"
+	}
+	if directory == "" {
+		directory = "Unknown"
+	}
+	return fmt.Sprintf("Version %s, Directory: %s", version, directory)
+}
+func (i packageItem) FilterValue() string { return i.pkg.Path }
+
+func NewListModel(packages []util.Package) listModel {
     items := make([]list.Item, len(packages))
     for i, pkg := range packages {
-        items[i] = pkg
+        items[i] = packageItem{pkg: pkg}
     }
 
     l := list.New(items, list.NewDefaultDelegate(), 0, 0)
