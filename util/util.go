@@ -2,6 +2,8 @@ package util
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,6 +18,12 @@ import (
 const (
 	PKG_SEARCH_URL = "https://pkg.go.dev/search?m=package&%s"
 )
+
+type Package struct {
+    Path     string `json:"Path"`
+    Version  string `json:"Version"`
+    Dir      string `json:"Dir"`
+}
 
 func GetPkgUrl(value string) string {
 	re := regexp.MustCompile(`\((.*?)\)`)
@@ -122,6 +130,25 @@ func extractModuleFromLine(singular bool, line string) string {
 	}
 
 	return module + "@" + version
+}
+
+func GetDependencyList()([]Package, error){
+	output, err := exec.Command("go", "list", "-m", "-json", "all").Output()
+	if err != nil {
+		return nil, fmt.Errorf("error executing command: %v", err)
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	var packages []Package
+
+	for decoder.More() {
+		var pkg Package
+		if err := decoder.Decode(&pkg); err != nil {
+			return nil, fmt.Errorf("error parsing JSON: %v", err)
+		}
+		packages = append(packages, pkg)
+	}
+	return packages, nil
 }
 
 func getText(n *html.Node) string {
