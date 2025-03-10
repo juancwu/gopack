@@ -17,9 +17,13 @@ mv ./build/gop <your-path>
 
 # Usage
 
-There is a `help` command, but there is also this.
+There is a `help` command (`gop --help`), but here's a comprehensive guide to all commands.
 
-## Single Package
+## Get Command
+
+The `get` command allows you to search and install Go packages.
+
+### Single Package
 
 Following the naming scheme for Go packages, GoPack assumes the prefix `github.com/`.
 
@@ -28,14 +32,43 @@ and select the first match of the results and install it.
 
 Example: `gop get package` will install `github.com/something/package`.
 
-You can make GoPack to show the search results and select manually by passing the option `-select`.
+You can make GoPack show the search results and select manually by passing the option `-select` or `-s`.
 
-## Multiple Packages
+### Multiple Packages
 
 GoPack accepts multiple query strings separated by spaces. The default behaviour is the same as [Single Package](#single-package) and you can select the matches for each query
-by using the option `-select`.
+by using the option `-select` or `-s`.
 
 Example: `gop get package something/else` will install `github.com/something/package` and `github.com/something/else`.
+
+## Run Command
+
+The `run` command allows you to execute scripts defined in your `gopack.json` configuration file.
+
+Usage examples:
+- `gop run build` - Runs the "build" script defined in your configuration
+- `gop run --list` or `gop run -l` - Lists all available scripts
+- `gop run --init` or `gop run -i` - Initializes a new gopack.json configuration file
+- `gop run --config custom.json` or `gop run -c custom.json` - Specifies a custom configuration file path
+
+You can also run scripts directly from the root command:
+- `gop build` - Equivalent to `gop run build`
+
+## Configuration
+
+GoPack uses a `gopack.json` file to define scripts that can be run with the `run` command.
+
+Example `gopack.json`:
+```json
+{
+  "scripts": {
+    "build": "go build -o gop",
+    "test": "go test ./...",
+    "lint": "go vet ./...",
+    "format": "go fmt ./..."
+  }
+}
+```
 
 ## Removing Packages
 
