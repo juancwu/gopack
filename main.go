@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/log"
 
 	"github.com/juancwu/gopack/command"
+	"github.com/juancwu/gopack/config"
 	"github.com/juancwu/gopack/tui"
 )
 
@@ -21,9 +22,13 @@ func main() {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)
 		}
-	} else {
-		err := command.Execute()
-		if err != nil {
+	}
+	err := command.Execute()
+	if err != nil {
+		switch err.(type) {
+		case config.ScriptError:
+			os.Exit(1)
+		default:
 			log.Fatal(err)
 		}
 	}

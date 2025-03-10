@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "build": "go build -o gop",
+    "test": "go test ./...",
+    "lint": "go vet ./...",
+    "format": "go fmt ./..."
+  }
+}
