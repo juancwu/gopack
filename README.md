@@ -41,6 +41,12 @@ by using the option `-select` or `-s`.
 
 Example: `gop get package something/else` will install `github.com/something/package` and `github.com/something/else`.
 
+## List Command
+
+The `list` command displays all installed packages with their installation paths and versions.
+
+Usage: `gop list`
+
 ## Run Command
 
 The `run` command allows you to execute scripts defined in your `gopack.json` configuration file.
@@ -53,6 +59,23 @@ Usage examples:
 
 You can also run scripts directly from the root command:
 - `gop build` - Equivalent to `gop run build`
+
+## Update Command
+
+The `update` command updates GoPack to the latest version from GitHub.
+
+Usage: `gop update`
+
+Features:
+- Checks for the latest release on GitHub
+- Downloads appropriate binary for your OS/architecture
+- Replaces the current executable with the new version
+
+## Version Command
+
+The `version` command displays the current version of GoPack.
+
+Usage: `gop version`
 
 ## Configuration
 
