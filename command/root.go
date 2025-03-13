@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/juancwu/gopack/config"
 	"github.com/spf13/cobra"
@@ -15,6 +16,8 @@ const (
 )
 
 func Execute() error {
+	var showVersion bool
+
 	rootCmd := &cobra.Command{
 		Use:           "gop",
 		Short:         "A simple go package installer",
@@ -22,6 +25,12 @@ func Execute() error {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Check if version flag was provided
+			if showVersion {
+				fmt.Println(version)
+				return nil
+			}
+
 			// If no arguments, show help
 			if len(args) == 0 {
 				return cmd.Help()
@@ -54,10 +63,14 @@ func Execute() error {
 		},
 	}
 
+	// Add global version flag
+	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version information")
+
 	rootCmd.AddCommand(get())
 	rootCmd.AddCommand(run())
 	rootCmd.AddCommand(list())
 	rootCmd.AddCommand(update())
+	rootCmd.AddCommand(versionCmd())
 
 	return rootCmd.ExecuteContext(context.Background())
 }
