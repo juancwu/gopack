@@ -22,6 +22,7 @@ func main() {
 			fmt.Printf("Alas, there's been an error: %v", err)
 			os.Exit(1)
 		}
+		return
 	}
 	err := command.Execute()
 	if err != nil {
