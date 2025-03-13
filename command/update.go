@@ -17,9 +17,9 @@ import (
 var version = "dev"
 
 const (
-	repoOwner      = "juancwu"
-	repoName       = "gopack"
-	githubAPI      = "https://api.github.com/repos/%s/%s/releases/latest"
+	repoOwner = "juancwu"
+	repoName  = "gopack"
+	githubAPI = "https://api.github.com/repos/%s/%s/releases/latest"
 )
 
 type Release struct {
@@ -68,12 +68,18 @@ func update() *cobra.Command {
 			// Find the appropriate asset for the current OS/arch
 			osName := runtime.GOOS
 			archName := runtime.GOARCH
-			
+			switch archName {
+			case "amd64":
+				archName = "x86_64"
+			case "386":
+				archName = "i386"
+			}
+
 			var downloadURL string
 			assetName := fmt.Sprintf("gopack_%s_%s", osName, archName)
-			
+
 			for _, asset := range release.Assets {
-				if strings.Contains(asset.Name, assetName) {
+				if strings.Contains(strings.ToLower(asset.Name), assetName) {
 					downloadURL = asset.BrowserDownloadURL
 					break
 				}
@@ -87,7 +93,7 @@ func update() *cobra.Command {
 			fmt.Printf("Do you want to update from %s to %s? [y/N] ", version, latestVersion)
 			var confirmation string
 			fmt.Scanln(&confirmation)
-			
+
 			if strings.ToLower(confirmation) != "y" {
 				fmt.Println("Update cancelled.")
 				return nil
@@ -95,7 +101,7 @@ func update() *cobra.Command {
 
 			// Download the new binary
 			fmt.Println("Downloading update...")
-			
+
 			// Get executable path
 			execPath, err := os.Executable()
 			if err != nil {
@@ -142,18 +148,18 @@ ping -n 3 127.0.0.1 > nul
 move /y "%s" "%s"
 del "%s"
 `, tmpFile, execPath, batchFile)
-				
+
 				err = os.WriteFile(batchFile, []byte(batch), 0755)
 				if err != nil {
 					return fmt.Errorf("error creating update script: %v", err)
 				}
-				
+
 				cmd := exec.Command("cmd", "/c", "start", "/b", batchFile)
 				err = cmd.Start()
 				if err != nil {
 					return fmt.Errorf("error launching update script: %v", err)
 				}
-				
+
 				fmt.Println("Update downloaded. It will be installed when you close this program.")
 			} else {
 				// On Unix-like systems, we can replace the binary directly
@@ -161,10 +167,10 @@ del "%s"
 				if err != nil {
 					return fmt.Errorf("error installing update: %v", err)
 				}
-				
+
 				fmt.Println("Update installed successfully!")
 			}
-			
+
 			return nil
 		},
 	}
