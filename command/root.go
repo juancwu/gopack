@@ -57,6 +57,7 @@ func Execute() error {
 	rootCmd.AddCommand(get())
 	rootCmd.AddCommand(run())
 	rootCmd.AddCommand(list())
+	rootCmd.AddCommand(update())
 
 	return rootCmd.ExecuteContext(context.Background())
 }
