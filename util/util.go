@@ -20,9 +20,9 @@ const (
 )
 
 type Package struct {
-    Path     string `json:"Path"`
-    Version  string `json:"Version"`
-    Dir      string `json:"Dir"`
+	Path    string `json:"path"`
+	Version string `json:"version"`
+	Dir     string `json:"dir"`
 }
 
 func GetPkgUrl(value string) string {
@@ -132,7 +132,7 @@ func extractModuleFromLine(singular bool, line string) string {
 	return module + "@" + version
 }
 
-func GetDependencyList()([]Package, error){
+func GetDependencyList() ([]Package, error) {
 	output, err := exec.Command("go", "list", "-m", "-json", "all").Output()
 	if err != nil {
 		return nil, fmt.Errorf("error executing command: %v", err)
