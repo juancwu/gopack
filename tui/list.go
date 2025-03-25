@@ -9,18 +9,18 @@ import (
 )
 
 type packageItem struct {
-    pkg util.Package
+	pkg util.Package
 }
 
 type listModel struct {
 	List list.Model
 }
 
-func (i packageItem) Title() string       { return i.pkg.Path }
-func (i packageItem) Description() string { 
+func (i packageItem) Title() string { return i.pkg.Path }
+func (i packageItem) Description() string {
 	version := i.pkg.Version
 	directory := i.pkg.Dir
-	if version == ""{
+	if version == "" {
 		version = "Unknown"
 	}
 	if directory == "" {
@@ -31,17 +31,17 @@ func (i packageItem) Description() string {
 func (i packageItem) FilterValue() string { return i.pkg.Path }
 
 func NewListModel(packages []util.Package) listModel {
-    items := make([]list.Item, len(packages))
-    for i, pkg := range packages {
-        items[i] = packageItem{pkg: pkg}
-    }
+	items := make([]list.Item, len(packages))
+	for i, pkg := range packages {
+		items[i] = packageItem{pkg: pkg}
+	}
 
-    l := list.New(items, list.NewDefaultDelegate(), 0, 0)
-    l.Title = "Installed Packages"
+	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "Installed Packages"
 
-    return listModel{
-        List: l,
-    }
+	return listModel{
+		List: l,
+	}
 }
 
 func (m listModel) Init() tea.Cmd {
